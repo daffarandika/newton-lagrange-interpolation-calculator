@@ -3,14 +3,12 @@ import { Input } from '@/components/ui/input'
 import { Point } from "../model/types"
 import { X } from "lucide-react"
 import { useState } from "react"
-
 import {
   Sidebar,
   SidebarContent,
   SidebarHeader,
   SidebarProvider,
 } from '@/components/ui/sidebar'
-
 import {
   Select,
   SelectContent,
@@ -25,28 +23,41 @@ export function CalculatorSidebar() {
 
   const [points, setPoints] = useState<Point[]>([{ x: '', y: ''}])
   const [x, setX] = useState("")
+  const [method, setMethod] = useState("")
 
-  const handlePointChanges = (index: number, axis: 'x'|'y', value: string) => {
+  const handlePointChange = (index: number, axis: 'x'|'y', value: string) => {
     const newPoints = [...points];
     newPoints[index][axis] = value;
     setPoints(newPoints);
 
     if (index == points.length - 1 && newPoints[index].x && newPoints[index].y) {
-      setPoints([...newPoints, { x: '', y: '' }])
+      setPoints([...newPoints, { x: '', y: '' }]);
     }
   }
 
   const handleRemovePoint = (index: number) => {
     const newPoints = points.filter((_, i) => i != index);
-    setPoints(newPoints.length ? newPoints : [{ x: '', y: ''}])
+    setPoints(newPoints.length ? newPoints : [{ x: '', y: ''}]);
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const numPoints = points.map((point) => ({
+      x: parseFloat(point.x),
+      y: parseFloat(point.y),
+    }))
+    numPoints.pop()
+    const payload = {
+      method: method,
+      points: numPoints,
+      x: parseFloat(x)
+    }
+    console.log(payload)
   }
 
   return (
     <SidebarProvider>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={(e) => handleSubmit(e)}>
         <Sidebar className="w-80">
           <SidebarHeader className="border-b border-border px-4 py-2">
             <h2 className="text-lg font-semibold">Interpolasi</h2>
@@ -54,9 +65,9 @@ export function CalculatorSidebar() {
           <SidebarContent>
             <div className="flex flex-col gap-2 p-4">
               <div className="flex flex-row items-center">
-                <label htmlFor="x" className="text-left w-4/5">Metode interpolasi: </label>
-                <Select>
-                  <SelectTrigger className="w-1/2">
+                <label htmlFor="x" className="text-left w-3/5">Metode interpolasi : </label>
+                <Select onValueChange={(newMethod: string) => { setMethod(newMethod); } }>
+                  <SelectTrigger className="w-2/5">
                     <SelectValue placeholder="Pilih metode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -69,7 +80,7 @@ export function CalculatorSidebar() {
                 </Select>
               </div>
               <div className="flex flex-row items-center">
-                <label htmlFor="x" className="text-left w-4/5">Nilai yang ingin diinterpolasi:</label>
+                <label htmlFor="x" className="text-left w-4/5">Nilai yang ingin diinterpolasi  :</label>
                 <Input
                   value={x}
                   onChange={(e) => {setX(e.target.value)}}
@@ -84,7 +95,7 @@ export function CalculatorSidebar() {
                   <div className="flex flex-grow items-center gap-2">
                     <Input
                       value={point.x}
-                      onChange={(e) => handlePointChanges(index, 'x', e.target.value)}
+                      onChange={(e) => handlePointChange(index, 'x', e.target.value)}
                       placeholder={ `x_${index}` }
                       className="w-2/5"
                       type="number"
@@ -92,15 +103,14 @@ export function CalculatorSidebar() {
                     />
                     <Input
                       value={point.y}
-                      onChange={(e) => handlePointChanges(index, 'y', e.target.value)}
+                      onChange={(e) => handlePointChange(index, 'y', e.target.value)}
                       placeholder={ `y_${index}` }
                       className="w-2/5"
                       type="number"
                       aria-label={`Y coordinate for point ${index + 1}`}
                     />
-                  {index !== points.length - 1 && (
                     <Button
-                      className={ "w-1/5" + (index !== points.length-1 ? "invisible" : "visible") }
+                      className={ "w-1/5 " + (index === points.length-1 ? "invisible" : "visible") }
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemovePoint(index)}
@@ -108,7 +118,6 @@ export function CalculatorSidebar() {
                     >
                       <X className="h-4 w-4" />
                     </Button>
-                  )}
                   </div>
                 </div>
               ))}
@@ -116,6 +125,7 @@ export function CalculatorSidebar() {
                 variant="outline"
                 className="mt-2"
                 onClick={() => {}}
+                type="submit"
               >Hitung
               </Button>
             </div>
